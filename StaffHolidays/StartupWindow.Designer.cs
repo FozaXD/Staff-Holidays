@@ -73,6 +73,7 @@
             this.ClientSize = new System.Drawing.Size(326, 158);
             this.Controls.Add(this.existingAccountButton);
             this.Controls.Add(this.newAccountButton);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;

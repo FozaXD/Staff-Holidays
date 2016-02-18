@@ -57,7 +57,7 @@ namespace StaffHolidays
                         cmd.CommandText = @"INSERT INTO Staff (Name, Type, YearToDateOff) VALUES (@name,@type,@yeartodateoff) ";
                         cmd.Connection = con;
                         cmd.Parameters.Add(new SQLiteParameter("@name", nameText.Text));
-                        cmd.Parameters.Add(new SQLiteParameter("@description", typeComboBox.SelectedIndex));
+                        cmd.Parameters.Add(new SQLiteParameter("@type", typeComboBox.SelectedIndex));
                         cmd.Parameters.Add(new SQLiteParameter("@yeartodateoff", 0));
 
                         con.Open();
@@ -81,6 +81,16 @@ namespace StaffHolidays
         private void addButton_Click(object sender, EventArgs e)
         {
             AddStaffToDB();
+        }
+
+        private void nameTextBox_TextChanged(object sender, EventArgs e)
+        {
+            SetErrorProviders();
+        }
+
+        private void typeComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            SetErrorProviders();
         }
     }
 }

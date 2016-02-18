@@ -39,7 +39,7 @@ namespace StaffHolidays
                           [Id] INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
                           [Name] TEXT NOT NULL,
                           [Type] INTEGER NOT NULL,
-                          [YearToDateOff] INTEGER NOT NULL
+                          [YearToDateOff] INTEGER
                           )";               
 
                 System.Data.SQLite.SQLiteConnection.CreateFile(Path.Combine(Variables.databaseFolder, newAccountName));        // Create the file which will be hosting our database
