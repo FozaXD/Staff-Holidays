@@ -166,13 +166,13 @@ namespace StaffHolidays
         {
             if (e.Button == MouseButtons.Right)
             {
-                staffDataGridView.Items.Clear();
-                staffDataGridView.Items.Add("Edit Selected");
+                staffContextMenu.Items.Clear();
+                staffContextMenu.Items.Add("Edit Selected");
                 var ht = staffDataGridView.HitTest(e.X, e.Y);
 
                 if (ht.Type != DataGridViewHitTestType.None && ht.Type != DataGridViewHitTestType.ColumnHeader)
                 {
-                    staffDataGridView.Show(staffDataGridView, new Point(e.X, e.Y));
+                    staffContextMenu.Show(staffDataGridView, new Point(e.X, e.Y));
                 }
 
             }
