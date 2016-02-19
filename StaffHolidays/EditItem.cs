@@ -11,6 +11,7 @@ namespace StaffHolidays
             InitializeComponent();
 
             SetupCategories();
+            SetFields();
             SetErrorProviders();
         }
 
@@ -55,7 +56,7 @@ namespace StaffHolidays
                     cmd.CommandText = @"Update Staff SET Name = @name, Type = @type where Id =" + Variables.Id;
                     cmd.Connection = con;
                     cmd.Parameters.Add(new SQLiteParameter("@name", nameTextBox.Text));
-                    cmd.Parameters.Add(new SQLiteParameter("@type", typeComboBox.SelectedIndex));
+                    cmd.Parameters.Add(new SQLiteParameter("@type", typeComboBox.SelectedIndex + 1));
 
                     con.Open();
 
@@ -77,7 +78,7 @@ namespace StaffHolidays
         public void SetFields()
         {
             nameTextBox.Text = Variables.Name;
-            typeComboBox.SelectedIndex = Variables.TypeIndex;
+            typeComboBox.SelectedIndex = Variables.TypeIndex - 1;
         }
 
         private void descriptionText_Click(object sender, EventArgs e)

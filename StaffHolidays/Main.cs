@@ -15,6 +15,12 @@ namespace StaffHolidays
 {
     public partial class Main : Form
     {
+
+        string staff;
+        List<DateTime> staffDatesOffList = new List<DateTime>();
+        List<DateTime> Start = new List<DateTime>();
+        List<DateTime> End = new List<DateTime>();
+
         public Main()
         {
             InitializeComponent();
@@ -27,6 +33,50 @@ namespace StaffHolidays
         public void Draw()
         {
             SetStaffDataGridView();
+            SetBoldedDates();
+        }
+
+        public void SetBoldedDates()
+        {
+            Start.Clear();
+            End.Clear();
+            staffDatesOffList.Clear();
+            foreach (DataGridViewRow row in staffDataGridView.Rows)
+            {
+                staff = staffDataGridView[1, row.Index].Value.ToString();
+                try
+                {
+                    SQLiteConnection con = new SQLiteConnection(Variables.dataPath);
+                    con.Open();
+                    Start.Clear();
+                    End.Clear();
+                    SQLiteCommand comm = new SQLiteCommand("Select Start, End From " + staff, con);
+                    using (SQLiteDataReader read = comm.ExecuteReader())
+                    {
+                        while (read.Read())
+                        {
+                            Start.Add(Convert.ToDateTime(read[0]));
+                            End.Add(Convert.ToDateTime(read[1]));
+                        }
+                    }
+                    con.Close();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+
+                foreach (DateTime row2 in Start)
+                {
+                    int x = 0;                 
+                    for (DateTime date = row2; date <= End[x]; date = date.AddDays(1))
+                        staffDatesOffList.Add(date);
+                    x++;
+                }
+                DateTime[] staffDatesOff = staffDatesOffList.ToArray();
+                mainCalendar.BoldedDates = staffDatesOff; //new DateTime[] { new DateTime(2016, 2, 26, 0, 0, 0, 0), new DateTime(2016, 2, 27, 0, 0, 0, 0) };
+            }
+
         }
 
         public void CheckReusePathExists()
@@ -60,7 +110,8 @@ namespace StaffHolidays
 
         private void SetNames()
         {
-            accountNameLabel.Text = Variables.accountName;
+            Text += " - " + Variables.accountName;
+            Refresh();
         }
 
         private void SetStaffDataGridView()
@@ -91,6 +142,54 @@ namespace StaffHolidays
                 else
                 {
                     removeStaffButton.Enabled = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+
+        private void SetIndividualStaffDataGridView()
+        {
+            indiStaffHoliDataGridView.Rows.Clear();
+            try
+            {
+                SQLiteConnection con = new SQLiteConnection(Variables.dataPath);
+                con.Open();
+
+                // As multiple can be selected only get last.
+                if (staffDataGridView.SelectedRows.Count == 1)
+                {
+                    foreach (DataGridViewRow row in staffDataGridView.SelectedRows)
+                    {
+                        SQLiteCommand comm = new SQLiteCommand("Select * From " + staffDataGridView[1, row.Index].Value.ToString(), con);
+                        using (SQLiteDataReader read = comm.ExecuteReader())
+                        {
+                            while (read.Read())
+                            {
+                                indiStaffHoliDataGridView.Rows.Add(new object[] {
+                                read.GetValue(0),  // U can use column index
+                                read.GetValue(read.GetOrdinal("Start")),  // Or column name like this
+                                read.GetValue(read.GetOrdinal("End")),
+                                read.GetValue(read.GetOrdinal("Count")),
+                                read.GetValue(read.GetOrdinal("Reason")),
+                                read.GetValue(read.GetOrdinal("Approved"))
+                                });
+                            }
+                        }
+                        con.Close();
+                    }
+                }
+
+                if (indiStaffHoliDataGridView.Rows.Count != 0)
+                {
+                    removeHoliday.Enabled = true;
+                }
+                else
+                {
+                    removeHoliday.Enabled = false;
                 }
             }
             catch (Exception ex)
@@ -138,7 +237,6 @@ namespace StaffHolidays
                 Variables.Id = Convert.ToInt32(selectedRow.Cells[0].Value);
                 Variables.Name = Convert.ToString(selectedRow.Cells[1].Value);
                 Variables.TypeIndex = Convert.ToInt32(selectedRow.Cells[2].Value);
-                Variables.YearToDateOff = Convert.ToInt32(selectedRow.Cells[3].Value);
 
                 EditItem editItem = new EditItem();
                 editItem.ShowDialog();
@@ -173,6 +271,85 @@ namespace StaffHolidays
                 if (ht.Type != DataGridViewHitTestType.None && ht.Type != DataGridViewHitTestType.ColumnHeader)
                 {
                     staffContextMenu.Show(staffDataGridView, new Point(e.X, e.Y));
+                }
+
+            }
+        }
+
+        private void removeStaffButton_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("Are you sure you wish to remove the selected record?", "Remove Record?", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK)
+            {
+                try
+                {
+                    SQLiteConnection con = new SQLiteConnection(Variables.dataPath);
+                    con.Open();
+                    using (SQLiteCommand cmd = con.CreateCommand())
+                    {
+                        foreach (DataGridViewRow row in staffDataGridView.SelectedRows)
+                        {
+                            cmd.CommandText = " DROP Table '" + staffDataGridView[1, row.Index].Value.ToString() + "'";
+                            cmd.ExecuteNonQuery();
+                            cmd.CommandText = String.Format("DELETE FROM Staff WHERE Id=" + int.Parse(staffDataGridView[0, row.Index].Value.ToString()), con);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    con.Close();
+                    Draw();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+            }
+        }
+
+        private void staffDataGridView_SelectionChanged(object sender, EventArgs e)
+        {
+            foreach (DataGridViewRow row in staffDataGridView.SelectedRows)
+            {
+                staff = staffDataGridView[1, row.Index].Value.ToString();
+            }
+            SetIndividualStaffDataGridView();
+        }
+
+        private void addHoliday_Click(object sender, EventArgs e)
+        {
+            if (staffDataGridView.SelectedRows.Count == 1)
+            {
+                AddHoliday addHolidayForm = new AddHoliday(staff);
+                addHolidayForm.ShowDialog();
+                SetIndividualStaffDataGridView();
+                SetBoldedDates();
+            }
+        }
+
+        private void removeHoliday_Click(object sender, EventArgs e)
+        {
+            if (staffDataGridView.SelectedRows.Count == 1)
+            {
+                if (MessageBox.Show("Are you sure you wish to remove the selected record?", "Remove Record?", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK)
+                {
+                    try
+                    {
+                        SQLiteConnection con = new SQLiteConnection(Variables.dataPath);
+                        con.Open();
+                        using (SQLiteCommand cmd = con.CreateCommand())
+                        {
+                            foreach (DataGridViewRow row in indiStaffHoliDataGridView.SelectedRows)
+                            {
+                                cmd.CommandText = String.Format("DELETE FROM " + staff + " WHERE Id=" + int.Parse(indiStaffHoliDataGridView[0, row.Index].Value.ToString()), con);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+                        con.Close();
+                        SetIndividualStaffDataGridView();
+                        SetBoldedDates();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message);
+                    }
                 }
 
             }
